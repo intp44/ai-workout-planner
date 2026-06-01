@@ -29,8 +29,11 @@ public class GeminiService {
         this.restTemplate = new RestTemplate();
     }
 
-    @SuppressWarnings("unchecked")
     public Map<String, Object> requestRoutine(String prompt) {
+        return requestJson(prompt);
+    }
+
+    public Map<String, Object> requestJson(String prompt) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -49,6 +52,7 @@ public class GeminiService {
                 .toUri();
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+        @SuppressWarnings("unchecked")
         Map<String, Object> response = (Map<String, Object>) restTemplate.postForObject(uri, request, Map.class);
         System.out.println("Gemini 응답: " + response);
         if (response == null) {
@@ -104,7 +108,9 @@ public class GeminiService {
                 .trim();
 
         try {
-            return objectMapper.readValue(sanitizedText, Map.class);
+            @SuppressWarnings("unchecked")
+            Map<String, Object> parsed = objectMapper.readValue(sanitizedText, Map.class);
+            return parsed;
         } catch (Exception e) {
             throw new IllegalStateException("Gemini API 텍스트 JSON 파싱 실패", e);
         }

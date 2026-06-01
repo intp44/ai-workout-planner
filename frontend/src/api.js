@@ -55,6 +55,13 @@ export function getRoutineWithCondition(token, condition) {
   });
 }
 
+export function getExerciseReplacement(token, replacementRequest) {
+  return fetchJson(`${API_BASE_URL}/api/routine/replacement`, token, {
+    method: 'POST',
+    body: JSON.stringify(replacementRequest),
+  });
+}
+
 // InBody API 함수들
 export async function analyzeInBodyImage(token, imageFile) {
   const formData = new FormData();

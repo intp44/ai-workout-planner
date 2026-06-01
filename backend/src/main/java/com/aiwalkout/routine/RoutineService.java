@@ -199,4 +199,60 @@ public class RoutineService {
                 .map(routine -> toRoutineResponse(routine, parsePayload(routine.getAiPayload())))
                 .orElse(null);
     }
+
+    @Transactional(readOnly = true)
+    public ExerciseReplacementResponse recommendExerciseReplacement(String userId, ExerciseReplacementRequest request) {
+        Survey survey = surveyService.getSurveyByUserId(userId)
+                .orElseThrow(() -> new IllegalStateException("설문 데이터가 필요합니다."));
+        String prompt = buildReplacementPrompt(survey, request);
+        Map<String, Object> content = geminiService.requestJson(prompt);
+
+        @SuppressWarnings("unchecked")
+        java.util.List<java.util.Map<String, Object>> replacements = content.get("replacements") instanceof java.util.List ?
+                (java.util.List<java.util.Map<String, Object>>) content.get("replacements") : java.util.List.of();
+        String fallback = String.valueOf(content.getOrDefault("fallback", ""));
+
+        return new ExerciseReplacementResponse(replacements, fallback);
+    }
+
+    private String buildReplacementPrompt(Survey survey, ExerciseReplacementRequest request) {
+        StringBuilder promptBuilder = new StringBuilder();
+        promptBuilder.append("당신은 한국 사용자에게 맞춤형 운동 루틴을 제공하는 AI 트레이너입니다. " +
+                "다음 기존 운동을 동일 근육군에서 진행할 수 있는 맨몸 대체 운동으로 바꾸어 주세요. " +
+                "만약 동일 근육군 맨몸 대체 운동이 적합하지 않다면 스트레칭 또는 인접 근육군 운동도 추천해 주세요. " +
+                "응답은 오직 JSON 형식으로만 반환하고 추가 설명은 포함하지 마세요. " +
+                "JSON 형식은 반드시 다음과 같아야 합니다: {\"replacements\":[{\"name\":\"푸쉬업\",\"sets\":3,\"reps\":\"12-15\",\"rest\":\"60초\",\"note\":\"기구 없이 가능한 대체 운동\"}],\"fallback\":\"기구 대체가 어려울 때는 스트레칭 또는 인접 근육군 운동을 해보세요.\"}. ");
+
+        promptBuilder.append(String.format(
+                "사용자 정보: 나이 %d세, 성별 %s, 키 %dcm, 몸무게 %dkg, 목표 %s, 운동 경험 %s, 현재 기구 %s. ",
+                survey.getAge(),
+                survey.getGender(),
+                survey.getHeightCm(),
+                survey.getWeightKg(),
+                mapGoalToText(survey.getGoal()),
+                mapExperienceToText(survey.getExperienceLevel()),
+                mapEquipmentToText(survey.getEquipment())
+        ));
+
+        promptBuilder.append(String.format(
+                "기존 운동 정보: 요일 %s, 집중 부위 %s, 운동명 %s. ",
+                request.getDay(),
+                request.getFocus(),
+                request.getExerciseName()
+        ));
+        promptBuilder.append(String.format(
+                "대체 유형: %s. ",
+                mapReplacementTypeToText(request.getReplacementType())
+        ));
+        promptBuilder.append("가능한 경우 동일 근육군 맨몸 운동으로 대체하고, 그렇지 않으면 스트레칭 또는 인접 근육군 운동을 제안하세요. ");
+        return promptBuilder.toString();
+    }
+
+    private String mapReplacementTypeToText(String replacementType) {
+        return switch (replacementType) {
+            case "no_equipment" -> "기구 없음";
+            case "no_space" -> "공간 없음";
+            default -> replacementType;
+        };
+    }
 }

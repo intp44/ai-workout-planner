@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAuthToken, getRoutine, getRoutineWithCondition } from './api';
+import {
+  getAuthToken,
+  getRoutine,
+  getRoutineWithCondition,
+  getExerciseReplacement,
+} from './api';
 import './RoutinePage.css';
 
 const TIRED_AREAS = [
@@ -23,6 +28,8 @@ export default function RoutinePage() {
   const [selectedTiredAreas, setSelectedTiredAreas] = useState([]);
   const [conditionNotes, setConditionNotes] = useState('');
   const [currentCondition, setCurrentCondition] = useState(null);
+  const [replacementData, setReplacementData] = useState({});
+  const [replacementLoadingKey, setReplacementLoadingKey] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -85,12 +92,88 @@ export default function RoutinePage() {
         level: conditionLevel,
         areas: selectedTiredAreas,
       });
+      setReplacementData({});
       setShowConditionForm(false);
     } catch (err) {
       setError('루틴 생성에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRequestReplacement = async (day, exerciseIndex, exerciseName, focus, replacementType) => {
+    const token = getAuthToken();
+    if (!token) {
+      navigate('/login', { replace: true });
+      return;
+    }
+
+    const key = `${day}-${exerciseIndex}`;
+    setReplacementLoadingKey(key);
+    setReplacementData((prev) => ({
+      ...prev,
+      [key]: {
+        loading: true,
+        options: [],
+        fallback: '',
+      },
+    }));
+
+    try {
+      const data = await getExerciseReplacement(token, {
+        day,
+        exerciseName,
+        focus,
+        replacementType,
+      });
+
+      setReplacementData((prev) => ({
+        ...prev,
+        [key]: {
+          loading: false,
+          options: data?.replacements || [],
+          fallback: data?.fallback || '',
+        },
+      }));
+    } catch (err) {
+      setReplacementData((prev) => ({
+        ...prev,
+        [key]: {
+          loading: false,
+          options: [],
+          fallback: '대체 운동을 찾지 못했습니다. 스트레칭 또는 인접 근육군 운동을 시도해보세요.',
+        },
+      }));
+    } finally {
+      setReplacementLoadingKey(null);
+    }
+  };
+
+  const handleApplyReplacement = (day, exerciseIndex, replacement) => {
+    setRoutine((prev) =>
+      prev.map((item) =>
+        item.day === day
+          ? {
+              ...item,
+              exercises: item.exercises.map((exercise, index) =>
+                index === exerciseIndex
+                  ? {
+                      ...exercise,
+                      name: replacement.name || exercise.name,
+                      sets: replacement.sets || exercise.sets,
+                      reps: replacement.reps || exercise.reps,
+                      rest: replacement.rest || exercise.rest,
+                      note: replacement.note || exercise.note,
+                    }
+                  : exercise
+              ),
+            }
+          : item
+      )
+    );
+
+    const key = `${day}-${exerciseIndex}`;
+    setReplacementData((prev) => ({ ...prev, [key]: { ...prev[key], applied: replacement.name } }));
   };
 
   const getConditionMessage = () => {
@@ -207,14 +290,63 @@ export default function RoutinePage() {
                   <p className="routine-focus">집중 부위: {item.focus}</p>
                   <div className="exercise-list">
                     {Array.isArray(item.exercises) &&
-                      item.exercises.map((exercise, exerciseIndex) => (
-                        <div key={exerciseIndex} className="exercise-item">
-                          <p className="exercise-name">{exercise.name}</p>
-                          <p>세트: {exercise.sets}</p>
-                          <p>횟수: {exercise.reps}</p>
-                          <p>휴식: {exercise.rest}</p>
-                        </div>
-                      ))}
+                      item.exercises.map((exercise, exerciseIndex) => {
+                        const key = `${item.day}-${exerciseIndex}`;
+                        const replacementInfo = replacementData[key] || {};
+                        return (
+                          <div key={exerciseIndex} className="exercise-item">
+                            <p className="exercise-name">{exercise.name}</p>
+                            <p>세트: {exercise.sets}</p>
+                            <p>횟수: {exercise.reps}</p>
+                            <p>휴식: {exercise.rest}</p>
+
+                            <div className="exercise-actions">
+                              <button
+                                className="replacement-action-button"
+                                onClick={() => handleRequestReplacement(item.day, exerciseIndex, exercise.name, item.focus, 'no_equipment')}
+                                disabled={replacementLoadingKey === key || loading}
+                              >
+                                기구 없음
+                              </button>
+                              <button
+                                className="replacement-action-button"
+                                onClick={() => handleRequestReplacement(item.day, exerciseIndex, exercise.name, item.focus, 'no_space')}
+                                disabled={replacementLoadingKey === key || loading}
+                              >
+                                공간 없음
+                              </button>
+                            </div>
+
+                            {replacementInfo.loading && <p className="replacement-loading">대체 운동을 찾는 중입니다...</p>}
+                            {replacementInfo.options && replacementInfo.options.length > 0 && (
+                              <div className="replacement-list">
+                                <p className="replacement-title">추천 대체 운동</p>
+                                {replacementInfo.options.map((replacement, replacementIndex) => (
+                                  <div key={replacementIndex} className="replacement-card">
+                                    <p className="exercise-name">{replacement.name}</p>
+                                    {replacement.sets && <p>세트: {replacement.sets}</p>}
+                                    {replacement.reps && <p>횟수: {replacement.reps}</p>}
+                                    {replacement.rest && <p>휴식: {replacement.rest}</p>}
+                                    {replacement.note && <p>설명: {replacement.note}</p>}
+                                    <button
+                                      className="replacement-apply-button"
+                                      onClick={() => handleApplyReplacement(item.day, exerciseIndex, replacement)}
+                                    >
+                                      이 운동으로 교체
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {replacementInfo.fallback && !replacementInfo.loading && (!replacementInfo.options || replacementInfo.options.length === 0) && (
+                              <div className="replacement-fallback">
+                                <p>{replacementInfo.fallback}</p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                   </div>
                 </div>
               ))
