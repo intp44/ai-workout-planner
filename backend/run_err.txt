@@ -1,0 +1,1 @@
+C:\Users\siemens\ai-workout-planner\backend\\gradle\wrapper\gradle-wrapper.jar에 기본 Manifest 속성이 없습니다.
