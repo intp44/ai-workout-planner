@@ -68,3 +68,7 @@ export function getMyWorkouts(token) {
 export function getWorkoutStats(token) {
   return fetchJson(`${API_BASE_URL}/api/workout/stats`, token);
 }
+
+export function searchYoutube(token, query) {
+  return fetchJson(`${API_BASE_URL}/api/youtube/search?q=${encodeURIComponent(query)}`, token);
+}

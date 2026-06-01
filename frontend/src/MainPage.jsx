@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { clearAuthToken, getAuthToken, API_BASE_URL } from './api';
+import { clearAuthToken, getAuthToken, getMyWorkouts, API_BASE_URL } from './api';
+import { getMotivationMessage, getDaysSinceLastWorkout } from './motivationMessages';
 
 export default function MainPage() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     const token = getAuthToken();
@@ -15,21 +17,48 @@ export default function MainPage() {
       return;
     }
 
-    fetch(`${API_BASE_URL}/api/auth/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error('인증에 실패했습니다. 다시 로그인해주세요.');
-        }
+    Promise.all([
+      fetch(`${API_BASE_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((res) => {
+        if (!res.ok) throw new Error('인증에 실패했습니다. 다시 로그인해주세요.');
         return res.json();
+      }),
+      getMyWorkouts(token).catch(() => []),
+    ])
+      .then(([userData, workouts]) => {
+        setUser(userData);
+        checkAndNotify(userData?.name || '회원', workouts);
       })
-      .then((data) => setUser(data))
       .catch((err) => setError(err.message || '사용자 정보를 가져오지 못했습니다.'))
       .finally(() => setLoading(false));
   }, []);
+
+  const checkAndNotify = (name, workouts) => {
+    const sessionKey = 'motivation-notified';
+    if (sessionStorage.getItem(sessionKey)) return;
+
+    const daysSince = getDaysSinceLastWorkout(workouts);
+    if (daysSince === 0) return;
+
+    const message = getMotivationMessage(name, daysSince ?? '?');
+    sessionStorage.setItem(sessionKey, '1');
+
+    setToast(message);
+    setTimeout(() => setToast(null), 8000);
+
+    if ('Notification' in window) {
+      if (Notification.permission === 'granted') {
+        new Notification('AI Walkout 알림', { body: message, icon: '/favicon.ico' });
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then((perm) => {
+          if (perm === 'granted') {
+            new Notification('AI Walkout 알림', { body: message, icon: '/favicon.ico' });
+          }
+        });
+      }
+    }
+  };
 
   const handleLogout = () => {
     clearAuthToken();
@@ -40,6 +69,14 @@ export default function MainPage() {
 
   return (
     <div className="page-container">
+      {toast && (
+        <div className="motivation-toast">
+          <span className="toast-icon">💪</span>
+          <span className="toast-message">{toast}</span>
+          <button className="toast-close" onClick={() => setToast(null)}>✕</button>
+        </div>
+      )}
+
       <div className="card">
         <h1>AI Walkout</h1>
         {loading && <p>메인 화면을 로드 중입니다...</p>}

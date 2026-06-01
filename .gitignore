@@ -31,3 +31,8 @@ Thumbs.db
 
 # Node
 node_modules/
+
+# Large binary files
+*.zip
+backend/build/
+my_changes.patch
