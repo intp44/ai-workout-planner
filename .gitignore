@@ -31,8 +31,12 @@ Thumbs.db
 
 # Node
 node_modules/
+<<<<<<< HEAD
+backend/build/
+=======
 
 # Large binary files
 *.zip
 backend/build/
 my_changes.patch
+>>>>>>> origin/main

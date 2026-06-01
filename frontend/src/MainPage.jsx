@@ -99,6 +99,9 @@ export default function MainPage() {
               <Link className="secondary-button" to="/workout">
                 운동 기록 관리하기
               </Link>
+              <Link className="secondary-button" to="/inbody">
+                인바디 관리
+              </Link>
             </div>
             <button className="secondary-button" onClick={handleLogout}>
               로그아웃
