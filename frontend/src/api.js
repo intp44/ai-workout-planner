@@ -72,3 +72,14 @@ export function getWorkoutStats(token) {
 export function searchYoutube(token, query) {
   return fetchJson(`${API_BASE_URL}/api/youtube/search?q=${encodeURIComponent(query)}`, token);
 }
+
+export function saveInBody(token, data) {
+  return fetchJson(`${API_BASE_URL}/api/inbody`, token, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export function getMyInBody(token) {
+  return fetchJson(`${API_BASE_URL}/api/inbody/me`, token);
+}
