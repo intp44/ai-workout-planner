@@ -19,7 +19,7 @@ public class Routine {
     @Column(columnDefinition = "text")
     private String description;
 
-    @Column(name = "ai_payload", columnDefinition = "jsonb")
+    @Column(name = "ai_payload", columnDefinition = "json")
     private String aiPayload;
 
     @Column(name = "recommended_date")
