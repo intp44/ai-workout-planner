@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-<<<<<<< HEAD
 import {
   getAuthToken,
   getRoutine,
   getRoutineWithCondition,
   getExerciseReplacement,
+  recommendRoutine,
+  searchYoutube,
 } from './api';
 import './RoutinePage.css';
 
@@ -18,8 +19,6 @@ const TIRED_AREAS = [
   { id: 'chest', label: '가슴' },
   { id: 'leg', label: '다리' },
 ];
-=======
-import { getAuthToken, getRoutine, recommendRoutine, searchYoutube } from './api';
 
 function parseRestSeconds(restStr) {
   if (!restStr) return 60;
@@ -150,7 +149,6 @@ function YoutubeSection({ exerciseName }) {
     </div>
   );
 }
->>>>>>> origin/main
 
 export default function RoutinePage() {
   const [routine, setRoutine] = useState(null);
@@ -172,7 +170,6 @@ export default function RoutinePage() {
 
     setLoading(true);
     getRoutine(token)
-<<<<<<< HEAD
       .then((data) => {
         if (data) {
           setRoutine(data.routine);
@@ -185,9 +182,6 @@ export default function RoutinePage() {
           }
         }
       })
-=======
-      .then((data) => { if (data) { setRoutine(data.routine); setTip(data.tip); } })
->>>>>>> origin/main
       .catch(() => setError('루틴을 불러오지 못했습니다.'))
       .finally(() => setLoading(false));
   }, [navigate]);
@@ -218,7 +212,6 @@ export default function RoutinePage() {
       const data = await getRoutineWithCondition(token, conditionData);
       setRoutine(data.routine);
       setTip(data.tip);
-<<<<<<< HEAD
       setCurrentCondition({
         level: conditionLevel,
         areas: selectedTiredAreas,
@@ -226,9 +219,6 @@ export default function RoutinePage() {
       setReplacementData({});
       setShowConditionForm(false);
     } catch (err) {
-=======
-    } catch {
->>>>>>> origin/main
       setError('루틴 생성에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setLoading(false);
@@ -317,6 +307,24 @@ export default function RoutinePage() {
     return null;
   };
 
+  const handleRecommend = async () => {
+    const token = getAuthToken();
+    if (!token) { navigate('/login', { replace: true }); return; }
+    setError('');
+    setLoading(true);
+    try {
+      const data = await recommendRoutine(token);
+      setRoutine(data.routine);
+      setTip(data.tip);
+      setCurrentCondition(null);
+      setReplacementData({});
+    } catch {
+      setError('루틴 생성에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="page-container">
       <div className="card routine-card">
@@ -333,6 +341,13 @@ export default function RoutinePage() {
           <div className="button-group">
             <button
               className="login-button"
+              onClick={handleRecommend}
+              disabled={loading}
+            >
+              {loading ? '추천 생성 중...' : '루틴 추천 받기'}
+            </button>
+            <button
+              className="secondary-button"
               onClick={() => setShowConditionForm(true)}
               disabled={loading}
             >
@@ -424,7 +439,6 @@ export default function RoutinePage() {
                   <p className="routine-focus">집중 부위: {item.focus}</p>
                   <div className="exercise-list">
                     {Array.isArray(item.exercises) &&
-<<<<<<< HEAD
                       item.exercises.map((exercise, exerciseIndex) => {
                         const key = `${item.day}-${exerciseIndex}`;
                         const replacementInfo = replacementData[key] || {};
@@ -434,6 +448,8 @@ export default function RoutinePage() {
                             <p>세트: {exercise.sets}</p>
                             <p>횟수: {exercise.reps}</p>
                             <p>휴식: {exercise.rest}</p>
+                            <RestTimer restStr={exercise.rest} />
+                            <YoutubeSection exerciseName={exercise.name} />
 
                             <div className="exercise-actions">
                               <button
@@ -482,18 +498,6 @@ export default function RoutinePage() {
                           </div>
                         );
                       })}
-=======
-                      item.exercises.map((exercise, exerciseIndex) => (
-                        <div key={exerciseIndex} className="exercise-item">
-                          <p className="exercise-name">{exercise.name}</p>
-                          <p>세트: {exercise.sets}</p>
-                          <p>횟수: {exercise.reps}</p>
-                          <p>휴식: {exercise.rest}</p>
-                          <RestTimer restStr={exercise.rest} />
-                          <YoutubeSection exerciseName={exercise.name} />
-                        </div>
-                      ))}
->>>>>>> origin/main
                   </div>
                 </div>
               ))

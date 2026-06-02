@@ -30,7 +30,23 @@ async function fetchJson(url, token, options = {}) {
     throw new Error('API 요청 실패');
   }
 
-  return response.json();
+  // 응답이 비어있는 경우 처리
+  const contentLength = response.headers.get('content-length');
+  if (contentLength === '0') {
+    return null;
+  }
+
+  const text = await response.text();
+  if (!text) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    console.error('JSON 파싱 실패:', error);
+    return null;
+  }
 }
 
 export function getSurvey(token) {
@@ -52,13 +68,6 @@ export function getRoutineWithCondition(token, condition) {
   return fetchJson(`${API_BASE_URL}/api/routine/recommend/with-condition`, token, {
     method: 'POST',
     body: JSON.stringify(condition),
-  });
-}
-
-export function getExerciseReplacement(token, replacementRequest) {
-  return fetchJson(`${API_BASE_URL}/api/routine/replacement`, token, {
-    method: 'POST',
-    body: JSON.stringify(replacementRequest),
   });
 }
 
@@ -123,6 +132,13 @@ export function getMyWorkouts(token) {
 
 export function getWorkoutStats(token) {
   return fetchJson(`${API_BASE_URL}/api/workout/stats`, token);
+}
+
+export function getExerciseReplacement(token, replacementRequest) {
+  return fetchJson(`${API_BASE_URL}/api/routine/replacement`, token, {
+    method: 'POST',
+    body: JSON.stringify(replacementRequest),
+  });
 }
 
 export function searchYoutube(token, query) {

@@ -1,6 +1,5 @@
 package com.aiwalkout.inbody;
 
-<<<<<<< HEAD
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -17,16 +16,10 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-=======
-import org.springframework.stereotype.Service;
-import java.util.List;
-import java.util.stream.Collectors;
->>>>>>> origin/main
 
 @Service
 public class InBodyService {
     private final InBodyRepository inBodyRepository;
-<<<<<<< HEAD
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final String apiKey;
@@ -240,25 +233,5 @@ public class InBodyService {
                 .stream()
                 .map(InBodyResponse::new)
                 .toList();
-=======
-
-    public InBodyService(InBodyRepository inBodyRepository) {
-        this.inBodyRepository = inBodyRepository;
-    }
-
-    public InBodyResponse save(String userId, InBodyRequest request) {
-        InBodyRecord record = new InBodyRecord();
-        record.setUserId(userId);
-        record.setRecordDate(request.getRecordDate());
-        record.setBodyFatPercent(request.getBodyFatPercent());
-        record.setMuscleMass(request.getMuscleMass());
-        record.setWeightKg(request.getWeightKg());
-        return InBodyResponse.from(inBodyRepository.save(record));
-    }
-
-    public List<InBodyResponse> getMyRecords(String userId) {
-        return inBodyRepository.findByUserIdOrderByRecordDateAsc(userId)
-                .stream().map(InBodyResponse::from).collect(Collectors.toList());
->>>>>>> origin/main
     }
 }
