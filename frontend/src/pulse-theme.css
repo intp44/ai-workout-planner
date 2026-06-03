@@ -23,7 +23,7 @@
 /* ---- Font (adjust path to where the .ttf lives relative to THIS file) ------ */
 @font-face {
   font-family: "Maru Minya";
-  src: url("fonts/x12y12pxMaruMinyaHangul.ttf") format("truetype");
+  src: url("/fonts/x12y12pxMaruMinyaHangul.ttf") format("truetype");
   font-weight: 400;
   font-display: swap;
 }
