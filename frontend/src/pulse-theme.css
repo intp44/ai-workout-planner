@@ -1,0 +1,378 @@
+/* =============================================================================
+   PULSE THEME for AI Walkout  ·  pulse-theme.css
+   -----------------------------------------------------------------------------
+   Drop-in dark/neon reskin mapped 1:1 to the real frontend's class names.
+   Self-contained: design tokens + @font-face + overrides in one file.
+
+   HOW TO APPLY (see INTEGRATION.md for detail):
+     1. Copy this file + the font into your app:
+          src/pulse-theme.css
+          src/fonts/x12y12pxMaruMinyaHangul.ttf
+        (adjust the @font-face url below to match where you put the .ttf)
+     2. Add the Pretendard body font in index.html <head>:
+          <link rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.css">
+     3. Import LAST in main.jsx (after './styles.css') so it wins:
+          import './styles.css';
+          import './pulse-theme.css';
+     4. Recolor the two Chart.js datasets — see the CHARTS note at the bottom.
+
+   No markup changes required. Optional polish notes are flagged ✦.
+   ============================================================================= */
+
+/* ---- Font (adjust path to where the .ttf lives relative to THIS file) ------ */
+@font-face {
+  font-family: "Maru Minya";
+  src: url("fonts/x12y12pxMaruMinyaHangul.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+
+/* ---- Design tokens --------------------------------------------------------- */
+:root {
+  --font-pixel: "Maru Minya", "Pretendard", monospace;
+  --font-body:  "Pretendard", system-ui, -apple-system, sans-serif;
+
+  --bg-0:#07080A; --bg-1:#0E1014; --bg-2:#161A20; --bg-3:#1E232B; --bg-4:#272D37;
+  --line:#262C35; --line-strong:#38414D; --line-faint:#181C22;
+  --fg-0:#F2F6F8; --fg-1:#AEB7C2; --fg-2:#717C89; --fg-3:#4B545F;
+
+  --volt:#C6FF2E; --volt-dim:#9ECC1F; --volt-ink:#0B1400; --volt-glow:rgba(198,255,46,.45);
+  --hot:#FF2E7E;  --hot-dim:#D11F62;  --hot-ink:#fff;      --hot-glow:rgba(255,46,126,.42);
+  --cool:#29E7FF; --cool-dim:#1FB6CC; --cool-ink:#001417;  --cool-glow:rgba(41,231,255,.40);
+
+  --ok:#2EE6A6; --warn:#FFC24B; --danger:#FF4D5E;
+  --ok-ink:#00150E; --warn-ink:#1A1300; --danger-ink:#1A0003;
+  --ok-fill:rgba(46,230,166,.13); --warn-fill:rgba(255,194,75,.13);
+  --danger-fill:rgba(255,77,94,.13); --cool-fill:rgba(41,231,255,.13);
+  --volt-fill:rgba(198,255,46,.13); --hot-fill:rgba(255,46,126,.13);
+
+  --grad-pulse:linear-gradient(100deg, var(--hot) 0%, var(--volt) 100%);
+
+  --r-xs:4px; --r-sm:8px; --r-md:12px; --r-lg:18px; --r-xl:26px; --r-pill:999px;
+  --shadow-md:0 2px 0 rgba(0,0,0,.5), 0 14px 32px rgba(0,0,0,.45);
+  --shadow-lg:0 2px 0 rgba(0,0,0,.5), 0 28px 60px rgba(0,0,0,.55);
+  --glow-volt:0 0 24px var(--volt-glow);
+  --glow-hot:0 0 24px var(--hot-glow);
+  --glow-cool:0 0 24px var(--cool-glow);
+  --ease-out:cubic-bezier(.22,1,.36,1);
+  --ease-pop:cubic-bezier(.34,1.56,.64,1);
+
+  /* hard override of the app's light defaults */
+  font-family: var(--font-body);
+  color: var(--fg-1);
+  background: var(--bg-0);
+}
+
+/* ---- Base ------------------------------------------------------------------ */
+body, html, #root { margin: 0; min-height: 100vh; }
+body {
+  background:
+    radial-gradient(900px 600px at 50% -8%, rgba(198,255,46,.06), transparent 60%),
+    radial-gradient(700px 500px at 90% 110%, rgba(255,46,126,.05), transparent 60%),
+    var(--bg-0);
+  color: var(--fg-1);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 {
+  font-family: var(--font-pixel);
+  -webkit-font-smoothing: none;
+  color: var(--fg-0);
+  letter-spacing: 0;
+}
+h1 { font-size: 2rem; line-height: 1.1; }
+h2 { font-size: 1.25rem; line-height: 1.15; }
+p { line-height: 1.6; color: var(--fg-1); }
+a { color: var(--cool); }
+::selection { background: var(--volt); color: var(--volt-ink); }
+
+/* scrollbar */
+* { scrollbar-color: var(--line-strong) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; }
+
+/* ---- Layout shells --------------------------------------------------------- */
+.page-container { padding: 40px 24px; align-items: flex-start; }
+.page-container > .card { margin-top: clamp(8px, 6vh, 64px); }
+
+.card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
+  color: var(--fg-1);
+}
+.card h1 { text-align: center; margin: 0 0 18px; }
+
+.inbody-page { color: var(--fg-1); }
+.inbody-page h1 { color: var(--fg-0); }
+
+/* welcome copy on MainPage */
+.welcome {
+  font-family: var(--font-pixel); -webkit-font-smoothing: none;
+  font-size: 1.4rem; color: var(--fg-0); margin: 4px 0 6px;
+}
+.subtitle { color: var(--fg-2); }
+
+/* ---- Buttons --------------------------------------------------------------- */
+.login-button,
+.secondary-button,
+.btn,
+.timer-btn,
+.youtube-btn,
+.replacement-action-button,
+.replacement-apply-button,
+.file-input-label,
+.condition-btn {
+  font-family: var(--font-pixel);
+  -webkit-font-smoothing: none;
+  letter-spacing: .01em;
+  border-radius: var(--r-md);
+  transition: transform var(--dur-fast,.12s) var(--ease-pop),
+              box-shadow .2s var(--ease-out),
+              background-color .2s var(--ease-out),
+              border-color .2s var(--ease-out);
+}
+
+/* primary = Volt */
+.login-button,
+.btn-primary,
+.form-buttons .login-button {
+  background: var(--volt);
+  color: var(--volt-ink);
+  border: 1px solid transparent;
+  box-shadow: var(--glow-volt);
+}
+.login-button:hover:not(:disabled),
+.btn-primary:hover:not(:disabled),
+.form-buttons .login-button:hover:not(:disabled) {
+  background: var(--volt);
+  transform: translateY(-1px);
+  box-shadow: 0 0 32px var(--volt-glow);
+}
+
+/* secondary = neutral surface */
+.secondary-button,
+.btn-secondary,
+.form-buttons .secondary-button {
+  background: var(--bg-3);
+  color: var(--fg-0);
+  border: 1px solid var(--line-strong);
+  box-shadow: none;
+}
+.secondary-button:hover:not(:disabled),
+.btn-secondary:hover:not(:disabled) {
+  background: var(--bg-4);
+  transform: translateY(-1px);
+}
+
+/* success = OK green */
+.btn-success {
+  background: var(--ok);
+  color: var(--ok-ink);
+  border: 1px solid transparent;
+  box-shadow: 0 0 24px rgba(46,230,166,.4);
+}
+.btn-success:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 0 32px rgba(46,230,166,.5); }
+
+.login-button:active, .secondary-button:active, .btn:active { transform: scale(.97); }
+.btn:disabled, button:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+
+/* button rows */
+.actions, .button-group, .form-buttons, .exercise-actions { gap: 12px; }
+
+/* ---- Forms ----------------------------------------------------------------- */
+label { color: var(--fg-1); }
+.form-section label, .form-group label { color: var(--fg-1); font-weight: 600; }
+
+input, select, textarea,
+.form-group input, .form-group textarea, .form-section textarea {
+  background: var(--bg-3);
+  color: var(--fg-0);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  font-family: var(--font-body);
+  transition: border-color .2s var(--ease-out), box-shadow .2s var(--ease-out);
+}
+input::placeholder, textarea::placeholder { color: var(--fg-3); }
+input:focus, select:focus, textarea:focus,
+.form-group input:focus, .form-group textarea:focus, .form-section textarea:focus {
+  outline: none;
+  border-color: var(--volt);
+  box-shadow: 0 0 0 3px rgba(198,255,46,.16);
+}
+/* native select dropdown + date picker on dark */
+select option { background: var(--bg-2); color: var(--fg-0); }
+input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(.8); }
+input[type="number"] { color: var(--fg-0); }
+
+/* condition buttons (좋음 / 보통 / 나쁨) */
+.condition-btn {
+  background: var(--bg-2);
+  border: 1px solid var(--line-strong);
+  color: var(--fg-1);
+}
+.condition-btn:hover { border-color: var(--volt); transform: translateY(-2px); color: var(--fg-0); }
+.condition-btn.active { color: #fff; border-color: transparent; transform: scale(1.04); }
+.condition-btn.active.good   { background: var(--ok);     color: var(--ok-ink);   box-shadow: 0 0 20px rgba(46,230,166,.4); }
+.condition-btn.active.medium { background: var(--warn);   color: var(--warn-ink); box-shadow: 0 0 20px rgba(255,194,75,.4); }
+.condition-btn.active.bad    { background: var(--danger); color: #fff;            box-shadow: 0 0 20px rgba(255,77,94,.4); }
+
+/* tired-area checkboxes */
+.checkbox-label {
+  background: var(--bg-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  color: var(--fg-1);
+  transition: all .2s var(--ease-out);
+}
+.checkbox-label:hover { border-color: var(--volt); background: var(--bg-3); color: var(--fg-0); }
+.checkbox-label input[type="checkbox"] { accent-color: var(--volt); }
+.checkbox-label input[type="checkbox"]:checked { accent-color: var(--volt); }
+.checkbox-label input[type="checkbox"]:checked + span { color: var(--volt); font-weight: 700; }
+
+/* file input label = secondary surface */
+.file-input-label { background: var(--bg-3); color: var(--fg-0); border: 1px solid var(--line-strong); }
+.file-input-label:hover { background: var(--bg-4); }
+
+/* survey & inbody panels */
+.condition-form, .upload-section, .data-section, .history-section {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+.condition-form h2, .upload-section h2, .data-section h2, .history-section h2 { color: var(--fg-0); }
+.preview-image { border: 1px solid var(--line-strong); border-radius: var(--r-md); box-shadow: var(--shadow-md); }
+
+/* ---- Routine list ---------------------------------------------------------- */
+.routine-card-item {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--volt);        /* ✦ neon ticket accent */
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-md);
+}
+.routine-card-item h2 { color: var(--volt); -webkit-font-smoothing: none; }
+.routine-focus { color: var(--fg-1); }
+
+.exercise-item {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+.exercise-name { color: var(--fg-0); }
+.exercise-item p { color: var(--fg-2); }
+
+/* exercise replacement */
+.replacement-action-button { background: var(--bg-3); color: var(--cool); border: 1px solid var(--line-strong); }
+.replacement-action-button:hover:not(:disabled) { border-color: var(--cool); background: var(--bg-4); transform: translateY(-1px); }
+.replacement-list { border-top: 1px solid var(--line); }
+.replacement-card { background: var(--cool-fill); border: 1px solid rgba(41,231,255,.3); border-radius: var(--r-sm); }
+.replacement-title { color: var(--cool); }
+.replacement-apply-button { background: var(--ok); color: var(--ok-ink); }
+.replacement-apply-button:hover { background: var(--ok); box-shadow: 0 0 18px rgba(46,230,166,.4); }
+.replacement-loading { color: var(--fg-2); }
+.replacement-fallback { background: var(--warn-fill); border: 1px solid rgba(255,194,75,.3); color: var(--warn); border-radius: var(--r-sm); }
+
+/* ---- Rest timer ------------------------------------------------------------ */
+.rest-timer { margin-top: 12px; }
+.timer-btn { background: var(--bg-3); color: var(--volt); border: 1px solid var(--line-strong); padding: 10px 14px; cursor: pointer; }
+.timer-btn:hover { border-color: var(--volt); background: var(--bg-4); }
+.timer-stop { color: var(--danger); }
+.timer-display { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.timer-progress-bar { flex: 1; min-width: 120px; height: 8px; background: var(--bg-3); border-radius: 999px; overflow: hidden; }
+.timer-progress-fill { height: 100%; background: var(--volt); box-shadow: var(--glow-volt); border-radius: 999px; transition: width 1s linear; }
+.timer-count { font-family: var(--font-pixel); -webkit-font-smoothing: none; font-size: 1.6rem; color: var(--volt); }
+.timer-count.timer-done { color: var(--ok); }
+
+/* ---- YouTube section ------------------------------------------------------- */
+.youtube-btn { background: transparent; color: var(--cool); border: 1px solid var(--line-strong); padding: 9px 13px; cursor: pointer; margin-top: 8px; }
+.youtube-btn:hover { border-color: var(--cool); background: var(--cool-fill); }
+.youtube-list { margin-top: 10px; display: grid; gap: 10px; }
+.youtube-item { display: flex; gap: 10px; align-items: center; text-decoration: none; background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 8px; color: var(--fg-1); }
+.youtube-item:hover { border-color: var(--line-strong); background: var(--bg-3); }
+.yt-thumbnail { width: 96px; height: 54px; object-fit: cover; border-radius: var(--r-xs); }
+.yt-title { font-size: 13px; color: var(--fg-1); }
+.yt-loading { color: var(--fg-2); }
+
+/* ---- Messages / status ----------------------------------------------------- */
+.error,
+.message-error { background: var(--danger-fill); color: var(--danger); border: 1px solid rgba(255,77,94,.3); border-radius: var(--r-sm); }
+.success,
+.message-success { background: var(--ok-fill); color: var(--ok); border: 1px solid rgba(46,230,166,.3); border-radius: var(--r-sm); padding: 12px; font-weight: 500; }
+.message-info { background: var(--cool-fill); color: var(--cool); border: 1px solid rgba(41,231,255,.3); border-radius: var(--r-sm); }
+.condition-warning { background: var(--warn-fill); color: var(--warn); border: 1px solid rgba(255,194,75,.35); border-radius: var(--r-sm); }
+.tip { background: var(--cool-fill); color: var(--cool); border: 1px solid rgba(41,231,255,.3); border-radius: var(--r-md); }
+.extracted-badge { background: var(--volt); color: var(--volt-ink); border-radius: var(--r-xs); -webkit-font-smoothing: none; font-family: var(--font-pixel); }
+
+/* ---- Tables (workout + inbody history) ------------------------------------- */
+.record-list table,
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.record-list th, .history-table th {
+  background: var(--bg-3);
+  color: var(--volt);
+  font-family: var(--font-pixel);
+  -webkit-font-smoothing: none;
+  font-weight: 400;
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.record-list td, .history-table td {
+  padding: 12px;
+  color: var(--fg-1);
+  border-bottom: 1px solid var(--line);
+}
+.record-list tr:hover td, .history-table tbody tr:hover td { background: var(--bg-3); }
+.history-table thead { background: transparent; }
+
+/* ---- Charts ---------------------------------------------------------------- */
+/* Chart.js paints to <canvas>; CSS can't recolor it. Style the frame here and
+   change the dataset colors in JS (see CHARTS note at file end). */
+.chart-block {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  margin: 20px 0;
+}
+.chart-block h2 { color: var(--fg-0); margin: 0 0 14px; font-size: 1.05rem; }
+
+/* ---- Spinner --------------------------------------------------------------- */
+.spinner {
+  border: 4px solid var(--bg-3);
+  border-top-color: var(--volt);
+}
+
+/* ---- Workout page layout (real classes; unstyled in the base app) ---------- */
+.workout-card { max-width: 760px; }
+.workout-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px 16px;
+  align-items: end;
+  margin-bottom: 8px;
+}
+.workout-form > .login-button { grid-column: 1 / -1; }
+.record-list { margin-top: 24px; }
+.record-list h2 { margin-bottom: 12px; }
+
+/* =============================================================================
+   CHARTS — change these two dataset colors in WorkoutPage.jsx:
+     Bar  "주간 운동 횟수":  backgroundColor: '#C6FF2E'
+     Line "{운동} 중량 변화": borderColor: '#C6FF2E',
+                              backgroundColor: 'rgba(198,255,46,0.2)'
+   And add neutral axis/grid colors via options.scales (optional):
+     scales: {
+       x: { ticks: { color: '#717C89' }, grid: { color: 'rgba(56,65,77,.3)' } },
+       y: { ticks: { color: '#717C89' }, grid: { color: 'rgba(56,65,77,.3)' } },
+     },
+     plugins: { legend: { labels: { color: '#AEB7C2' } } }
+   ============================================================================= */

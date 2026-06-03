@@ -66,7 +66,7 @@ export default function WorkoutPage() {
         {
           label: selectedExercise?.exerciseName || '운동 중량',
           data: values,
-          borderColor: '#1a73e8',
+          borderColor: '#C6FF2E',
           backgroundColor: 'rgba(26, 115, 232, 0.2)',
           tension: 0.3,
         },
@@ -172,7 +172,7 @@ export default function WorkoutPage() {
                   {
                     label: '운동 횟수',
                     data: workoutCounts,
-                    backgroundColor: '#1a73e8',
+                    backgroundColor: '#C6FF2E',
                   },
                 ],
               }}
