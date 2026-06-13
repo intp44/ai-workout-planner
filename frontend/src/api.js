@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'http://localhost:8080';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 const TOKEN_KEY = 'ai-walkout-auth-token';
 
 export function getAuthToken() {
@@ -113,6 +113,10 @@ export function getInBodyRecordHistory(token) {
   return fetchJson(`${API_BASE_URL}/api/inbody/history`, token);
 }
 
+export function deleteInBodyRecord(token, id) {
+  return fetchJson(`${API_BASE_URL}/api/inbody/${id}`, token, { method: 'DELETE' });
+}
+
 export function recommendRoutine(token) {
   return fetchJson(`${API_BASE_URL}/api/routine/recommend`, token, {
     method: 'POST',
@@ -132,6 +136,10 @@ export function getMyWorkouts(token) {
 
 export function getWorkoutStats(token) {
   return fetchJson(`${API_BASE_URL}/api/workout/stats`, token);
+}
+
+export function deleteWorkout(token, id) {
+  return fetchJson(`${API_BASE_URL}/api/workout/${id}`, token, { method: 'DELETE' });
 }
 
 export function getExerciseReplacement(token, replacementRequest) {
