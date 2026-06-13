@@ -1,19 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Line, Bar } from 'react-chartjs-2';
+import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  BarElement,
   PointElement,
   LineElement,
   Title,
   Tooltip,
   Legend,
 } from 'chart.js';
-import { getAuthToken, saveWorkout, getMyWorkouts, getWorkoutStats } from './api';
+import { getAuthToken, saveWorkout, getMyWorkouts, getWorkoutStats, deleteWorkout } from './api';
+import { getMotivationMessage, getDaysSinceLastWorkout } from './motivationMessages';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 const initialForm = {
   exerciseName: '',
@@ -30,6 +30,8 @@ export default function WorkoutPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [selectedExerciseName, setSelectedExerciseName] = useState('');
+  const [motivationMsg, setMotivationMsg] = useState('');
 
   useEffect(() => {
     const token = getAuthToken();
@@ -41,21 +43,45 @@ export default function WorkoutPage() {
       .then(([workouts, statsData]) => {
         setRecords(workouts || []);
         setStats(statsData);
+        if (statsData?.exerciseWeightTrends?.length > 0) {
+          setSelectedExerciseName(statsData.exerciseWeightTrends[0].exerciseName);
+        }
+        const daysSince = getDaysSinceLastWorkout(workouts);
+        if (daysSince === null || daysSince >= 7) {
+          setMotivationMsg(getMotivationMessage('회원님', daysSince));
+        }
       })
       .catch(() => setError('운동 기록을 불러오지 못했습니다.'));
   }, []);
 
-  const chartLabels = useMemo(() => {
-    return stats?.weeklyStats?.map((item) => item.date) || [];
-  }, [stats]);
+  const [calendarDate, setCalendarDate] = useState(new Date());
 
-  const workoutCounts = useMemo(() => {
-    return stats?.weeklyStats?.map((item) => item.count) || [];
-  }, [stats]);
+  const prevMonth = () => setCalendarDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1));
+  const nextMonth = () => setCalendarDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1));
+
+  const { firstDay, daysInMonth } = useMemo(() => {
+    const y = calendarDate.getFullYear();
+    const m = calendarDate.getMonth();
+    return {
+      firstDay: new Date(y, m, 1).getDay(),
+      daysInMonth: new Date(y, m + 1, 0).getDate(),
+    };
+  }, [calendarDate]);
+
+  const workoutDaysInMonth = useMemo(() => {
+    const y = calendarDate.getFullYear();
+    const m = calendarDate.getMonth();
+    const set = new Set();
+    records.forEach((r) => {
+      const [ry, rm, rd] = r.workoutDate.split('-').map(Number);
+      if (ry === y && rm - 1 === m) set.add(rd);
+    });
+    return set;
+  }, [records, calendarDate]);
 
   const selectedExercise = useMemo(() => {
-    return stats?.exerciseWeightTrends?.[0];
-  }, [stats]);
+    return stats?.exerciseWeightTrends?.find((e) => e.exerciseName === selectedExerciseName) || null;
+  }, [stats, selectedExerciseName]);
 
   const weightTrendData = useMemo(() => {
     const labels = selectedExercise?.entries?.map((entry) => entry.date) || [];
@@ -76,6 +102,26 @@ export default function WorkoutPage() {
 
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleDelete = async (id) => {
+    const token = getAuthToken();
+    if (!token) return;
+    try {
+      await deleteWorkout(token, id);
+      const [workouts, statsData] = await Promise.all([getMyWorkouts(token), getWorkoutStats(token)]);
+      setRecords(workouts || []);
+      setStats(statsData);
+      if (statsData?.exerciseWeightTrends?.length > 0) {
+        setSelectedExerciseName((prev) =>
+          statsData.exerciseWeightTrends.find((e) => e.exerciseName === prev)
+            ? prev
+            : statsData.exerciseWeightTrends[0].exerciseName
+        );
+      }
+    } catch {
+      setError('삭제에 실패했습니다.');
+    }
   };
 
   const handleSave = async () => {
@@ -110,6 +156,7 @@ export default function WorkoutPage() {
     <div className="page-container">
       <div className="card workout-card">
         <h1>운동 기록</h1>
+        {motivationMsg && <div className="motivation-banner">{motivationMsg}</div>}
         {error && <p className="error">{error}</p>}
         {success && <p className="success">{success}</p>}
 
@@ -162,42 +209,69 @@ export default function WorkoutPage() {
           </button>
         </div>
 
-        {stats && (
-          <div className="chart-block">
-            <h2>주간 운동 횟수</h2>
-            <Bar
-              data={{
-                labels: chartLabels,
-                datasets: [
-                  {
-                    label: '운동 횟수',
-                    data: workoutCounts,
-                    backgroundColor: '#C6FF2E',
-                  },
-                ],
-              }}
-              options={{
-                responsive: true,
-                plugins: {
-                  legend: { display: false },
-                },
-              }}
-            />
+        <div className="chart-block">
+          <div className="calendar-header">
+            <button className="cal-nav-btn" onClick={prevMonth}>‹</button>
+            <h2>{calendarDate.getFullYear()}년 {calendarDate.getMonth() + 1}월</h2>
+            <button className="cal-nav-btn" onClick={nextMonth}>›</button>
           </div>
-        )}
+          <div className="calendar-grid">
+            {['일', '월', '화', '수', '목', '금', '토'].map((d) => (
+              <div key={d} className="calendar-day-header">{d}</div>
+            ))}
+            {Array.from({ length: firstDay }).map((_, i) => (
+              <div key={`e${i}`} className="calendar-day calendar-day--empty" />
+            ))}
+            {Array.from({ length: daysInMonth }).map((_, i) => {
+              const day = i + 1;
+              const today = new Date();
+              const isToday =
+                today.getFullYear() === calendarDate.getFullYear() &&
+                today.getMonth() === calendarDate.getMonth() &&
+                today.getDate() === day;
+              const hasWorkout = workoutDaysInMonth.has(day);
+              return (
+                <div
+                  key={day}
+                  className={`calendar-day${hasWorkout ? ' calendar-day--workout' : ''}${isToday ? ' calendar-day--today' : ''}`}
+                >
+                  <span className="cal-day-num">{day}</span>
+                  {hasWorkout && <span className="cal-dot" />}
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-        {selectedExercise && (
+        {stats?.exerciseWeightTrends?.length > 0 && (
           <div className="chart-block">
-            <h2>{selectedExercise.exerciseName} 중량 변화</h2>
-            <Line
-              data={weightTrendData}
-              options={{
-                responsive: true,
-                plugins: {
-                  legend: { display: true },
-                },
-              }}
-            />
+            <div className="exercise-select-row">
+              <h2>중량 변화</h2>
+              <select
+                className="exercise-select"
+                value={selectedExerciseName}
+                onChange={(e) => setSelectedExerciseName(e.target.value)}
+              >
+                {stats.exerciseWeightTrends.map((e) => (
+                  <option key={e.exerciseName} value={e.exerciseName}>
+                    {e.exerciseName}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {selectedExercise ? (
+              <Line
+                data={weightTrendData}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: { display: true },
+                  },
+                }}
+              />
+            ) : (
+              <p>기록된 데이터가 없습니다.</p>
+            )}
           </div>
         )}
 
@@ -214,6 +288,7 @@ export default function WorkoutPage() {
                   <th>세트</th>
                   <th>중량(kg)</th>
                   <th>횟수</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -224,6 +299,14 @@ export default function WorkoutPage() {
                     <td>{record.sets}</td>
                     <td>{record.weightKg ?? '-'}</td>
                     <td>{record.reps}</td>
+                    <td>
+                      <button
+                        className="delete-record-btn"
+                        onClick={() => handleDelete(record.id)}
+                      >
+                        삭제
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -177,7 +177,7 @@
 .form-buttons .secondary-button {
   background-color: #6c757d;
   color: white;
-  min-width: 100px;
+  flex: 1;
 }
 
 .form-buttons .secondary-button:hover:not(:disabled) {

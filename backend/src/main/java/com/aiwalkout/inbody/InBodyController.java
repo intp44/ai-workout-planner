@@ -128,4 +128,13 @@ public class InBodyController {
                     .body(Map.of("error", "조회 실패: " + e.getMessage()));
         }
     }
+
+    @DeleteMapping("/{recordId}")
+    public ResponseEntity<Void> deleteInBodyRecord(
+            @PathVariable Long recordId,
+            Authentication authentication) {
+        String userId = authentication.getName();
+        inBodyService.deleteInBodyRecord(userId, recordId);
+        return ResponseEntity.noContent().build();
+    }
 }

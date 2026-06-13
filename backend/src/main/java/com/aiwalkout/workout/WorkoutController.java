@@ -4,7 +4,9 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,6 +34,13 @@ public class WorkoutController {
     public ResponseEntity<List<WorkoutRecordResponse>> getMyWorkouts(@AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
         return ResponseEntity.ok(workoutService.getMyWorkouts(userId));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteWorkout(@AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
+        String userId = jwt.getSubject();
+        workoutService.deleteWorkout(userId, id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/stats")

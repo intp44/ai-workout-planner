@@ -1,6 +1,5 @@
 import './styles.css';
-
-const BACKEND_URL = 'http://localhost:8080';
+import { API_BASE_URL } from './api';
 
 export default function LoginPage() {
   return (
@@ -8,7 +7,7 @@ export default function LoginPage() {
       <div className="card">
         <h1>AI Walkout</h1>
         <p>Google 계정으로 로그인하여 맞춤형 루틴을 받아보세요.</p>
-        <a className="login-button" href={`${BACKEND_URL}/oauth2/authorization/google`}>
+        <a className="login-button" href={`${API_BASE_URL}/oauth2/authorization/google`}>
           Google 로그인
         </a>
       </div>

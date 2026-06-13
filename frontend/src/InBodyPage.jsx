@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAuthToken, analyzeInBodyImage, saveInBodyRecord, updateInBodyRecord, getLatestInBodyRecord } from './api';
+import { getAuthToken, analyzeInBodyImage, saveInBodyRecord, updateInBodyRecord, getLatestInBodyRecord, getInBodyRecordHistory, deleteInBodyRecord } from './api';
 import './InBodyPage.css';
 
 export default function InBodyPage() {
@@ -151,18 +151,27 @@ export default function InBodyPage() {
   const loadHistory = async () => {
     try {
       const token = getAuthToken();
-      const result = await fetch('http://localhost:8080/api/inbody/history', {
-        headers: {
-          Authorization: token ? `Bearer ${token}` : undefined,
-        },
-      });
-      const data = await result.json();
-      if (data.data) {
+      const data = await getInBodyRecordHistory(token);
+      if (data?.data) {
         setHistory(data.data);
         setShowHistory(true);
       }
     } catch (error) {
       console.error('기록 로드 실패:', error);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('이 기록을 삭제하시겠습니까?')) return;
+    try {
+      const token = getAuthToken();
+      await deleteInBodyRecord(token, id);
+      setHistory((prev) => prev.filter((r) => r.id !== id));
+      setMessage('기록이 삭제되었습니다.');
+      setMessageType('success');
+    } catch (error) {
+      setMessage('삭제 중 오류가 발생했습니다: ' + error.message);
+      setMessageType('error');
     }
   };
 
@@ -339,6 +348,7 @@ export default function InBodyPage() {
                   <th>BMI</th>
                   <th>기초대사량</th>
                   <th>내장지방</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -347,9 +357,17 @@ export default function InBodyPage() {
                     <td>{record.recordDate}</td>
                     <td>{record.bodyFatPercent ? `${record.bodyFatPercent}%` : '-'}</td>
                     <td>{record.muscleMassKg ? `${record.muscleMassKg}kg` : '-'}</td>
-                    <td>{record.bmi ? record.bmi : '-'}</td>
-                    <td>{record.basalMetabolicRate ? `${record.basalMetabolicRate}` : '-'}</td>
-                    <td>{record.visceralFatLevel ? record.visceralFatLevel : '-'}</td>
+                    <td>{record.bmi ?? '-'}</td>
+                    <td>{record.basalMetabolicRate ?? '-'}</td>
+                    <td>{record.visceralFatLevel ?? '-'}</td>
+                    <td>
+                      <button
+                        className="btn-delete-record"
+                        onClick={() => handleDelete(record.id)}
+                      >
+                        삭제
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

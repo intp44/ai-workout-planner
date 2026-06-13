@@ -6,13 +6,16 @@ import SurveyPage from './SurveyPage';
 import RoutinePage from './RoutinePage';
 import WorkoutPage from './WorkoutPage';
 import InBodyPage from './InBodyPage';
+import NavBar from './NavBar';
 import { getAuthToken } from './api';
 
 function App() {
   const token = getAuthToken();
 
   return (
-    <Routes>
+    <>
+      <NavBar />
+      <Routes>
       <Route path="/login" element={token ? <Navigate to="/" replace /> : <LoginPage />} />
       <Route path="/login/success" element={<LoginSuccess />} />
       <Route path="/survey" element={token ? <SurveyPage /> : <Navigate to="/login" replace />} />
@@ -21,6 +24,7 @@ function App() {
       <Route path="/inbody" element={token ? <InBodyPage /> : <Navigate to="/login" replace />} />
       <Route path="/" element={token ? <HomeRoute /> : <Navigate to="/login" replace />} />
     </Routes>
+    </>
   );
 }
 

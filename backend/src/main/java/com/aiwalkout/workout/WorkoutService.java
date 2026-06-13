@@ -1,7 +1,9 @@
 package com.aiwalkout.workout;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.Comparator;
@@ -33,6 +35,16 @@ public class WorkoutService {
         return workoutRecordRepository.findByUserIdOrderByWorkoutDateDesc(userId).stream()
                 .map(WorkoutRecordResponse::new)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void deleteWorkout(String userId, Long id) {
+        WorkoutRecord record = workoutRecordRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (!record.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        workoutRecordRepository.delete(record);
     }
 
     public WorkoutStatsResponse getWorkoutStats(String userId) {

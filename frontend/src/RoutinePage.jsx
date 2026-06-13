@@ -20,7 +20,7 @@ const TIRED_AREAS = [
   { id: 'leg', label: '다리' },
 ];
 
-function parseRestSeconds(restStr) {
+export function parseRestSeconds(restStr) {
   if (!restStr) return 60;
   let total = 0;
   const minMatch = restStr.match(/(\d+)분/);

@@ -252,6 +252,23 @@
   border-bottom: none;
 }
 
+.btn-delete-record {
+  padding: 4px 12px;
+  background: transparent;
+  border: 1px solid #dc3545;
+  color: #dc3545;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-delete-record:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .inbody-page {
